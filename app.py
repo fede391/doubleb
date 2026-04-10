@@ -1,27 +1,14 @@
 import streamlit as st
-from datetime import datetime
-
-st.set_page_config(page_title="DoubeB", page_icon="👶")
-
-st.title("DoubeB 👶")
-st.subheader("Track your baby events")
-
-# --- Form per inserire evento ---
-st.header("Add new event")
-
-event_type = st.selectbox(
-    "Event type",
-    ["Feeding", "Diaper"]
+from ui.sections import (
+    render_kpi_header,
+    render_quick_log,
+    render_event_timeline,
 )
 
-notes = st.text_input("Notes (optional)")
+st.set_page_config(page_title="DoubleB", page_icon="👶")
 
-if st.button("Save event"):
-    event = {
-        "type": event_type,
-        "notes": notes,
-        "timestamp": datetime.now()
-    }
+st.title("DoubleB 👶")
 
-    st.success("Event saved!")
-    st.write(event)
+render_kpi_header()
+render_quick_log()
+render_event_timeline()
