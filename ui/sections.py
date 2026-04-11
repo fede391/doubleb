@@ -70,7 +70,7 @@ def render_kpi_box(label: str, value: str):
             justify-content: center;
         ">
             <div style="
-                font-size: 0.82rem;
+                font-size: 0.70rem;
                 color: rgba(49, 51, 63, 0.75);
                 margin-bottom: 0.35rem;
                 line-height: 1.1;
@@ -78,7 +78,7 @@ def render_kpi_box(label: str, value: str):
                 {label}
             </div>
             <div style="
-                font-size: 1.15rem;
+                font-size: 1.0rem;
                 font-weight: 600;
                 color: rgb(49, 51, 63);
                 line-height: 1.2;
@@ -129,7 +129,7 @@ def render_kpi_header():
 
         today_text = f"{breast_count}B • {bottle_count}Bo • {diaper_count}D"
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3, gap="small")
 
         with col1:
             render_kpi_box("Last feed", feeding_text)
