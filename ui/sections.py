@@ -55,6 +55,42 @@ def render_compact_ui_styles():
     )
 
 
+def render_kpi_box(label: str, value: str):
+    """Render a compact KPI box for mobile."""
+    st.markdown(
+        f"""
+        <div style="
+            border: 1px solid rgba(49, 51, 63, 0.15);
+            border-radius: 12px;
+            padding: 0.55rem 0.4rem;
+            text-align: center;
+            min-height: 88px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        ">
+            <div style="
+                font-size: 0.82rem;
+                color: rgba(49, 51, 63, 0.75);
+                margin-bottom: 0.35rem;
+                line-height: 1.1;
+            ">
+                {label}
+            </div>
+            <div style="
+                font-size: 1.15rem;
+                font-weight: 600;
+                color: rgb(49, 51, 63);
+                line-height: 1.2;
+            ">
+                {value}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_kpi_header():
     """Render the top KPI area."""
     try:
@@ -91,18 +127,18 @@ def render_kpi_header():
             elif event["event_type"] == "diaper":
                 diaper_count += 1
 
-        col1, col2 = st.columns(2)
+        today_text = f"{breast_count}B • {bottle_count}Bo • {diaper_count}D"
+
+        col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric("Last feeding/bottle", feeding_text)
+            render_kpi_box("Last feed", feeding_text)
 
         with col2:
-            st.metric("Last diaper", diaper_text)
+            render_kpi_box("Last diaper", diaper_text)
 
-        st.metric(
-            "Today",
-            f"{breast_count} breast • {bottle_count} bottle • {diaper_count} diapers",
-        )
+        with col3:
+            render_kpi_box("Today", today_text)
 
     except Exception as e:
         st.error(f"Error loading KPIs: {e}")
