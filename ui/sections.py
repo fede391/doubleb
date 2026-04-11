@@ -20,6 +20,41 @@ from services.events import (
 # ============================================================
 
 
+def render_compact_ui_styles():
+    """Small CSS tweaks for a more compact mobile UI."""
+    st.markdown(
+        """
+        <style>
+        .timeline-item {
+            padding: 0.2rem 0 0.3rem 0;
+            border-bottom: 1px solid rgba(49, 51, 63, 0.15);
+            margin-bottom: 0.05rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .timeline-subtitle {
+            font-size: 0.9rem;
+            color: rgba(49, 51, 63, 0.75);
+            line-height: 1.2;
+            margin-bottom: 0.1rem;
+        }
+
+        .timeline-notes {
+            font-size: 0.85rem;
+            color: rgba(49, 51, 63, 0.65);
+            line-height: 1.2;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_kpi_header():
     """Render the top KPI area."""
     try:
@@ -56,7 +91,7 @@ def render_kpi_header():
             elif event["event_type"] == "diaper":
                 diaper_count += 1
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
 
         with col1:
             st.metric("Last feeding/bottle", feeding_text)
@@ -64,11 +99,10 @@ def render_kpi_header():
         with col2:
             st.metric("Last diaper", diaper_text)
 
-        with col3:
-            st.metric(
-                "Today",
-                f"Breast: {breast_count} | Bottle: {bottle_count} | Diapers: {diaper_count}",
-            )
+        st.metric(
+            "Today",
+            f"{breast_count} breast • {bottle_count} bottle • {diaper_count} diapers",
+        )
 
     except Exception as e:
         st.error(f"Error loading KPIs: {e}")
@@ -104,7 +138,7 @@ def render_quick_log():
 
     initialize_quick_log_state()
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
         feeding_label = "✅ Feeding" if st.session_state.selected_feeding else "Feeding"
@@ -118,13 +152,12 @@ def render_quick_log():
             st.session_state.selected_bottle = not st.session_state.selected_bottle
             st.rerun()
 
-    with col3:
-        diaper_label = "✅ Diaper" if st.session_state.selected_diaper else "Diaper"
-        if st.button(diaper_label, use_container_width=True, key="btn_diaper"):
-            st.session_state.selected_diaper = not st.session_state.selected_diaper
-            st.rerun()
-
-    st.caption("Defaults: Feeding = 30 min, Bottle = 60 ml, Diaper = mixed")
+    diaper_label = "✅ Diaper" if st.session_state.selected_diaper else "Diaper"
+    if st.button(diaper_label, use_container_width=True, key="btn_diaper"):
+        st.session_state.selected_diaper = not st.session_state.selected_diaper
+        st.rerun()
+    st.write("")
+    st.caption("Quick defaults: feeding = 30 min, bottle = 60 ml, diaper = mixed")
 
     selected_actions = []
     if st.session_state.selected_feeding:
@@ -135,9 +168,9 @@ def render_quick_log():
         selected_actions.append("diaper")
 
     if selected_actions:
-        st.success(f"Selected: {', '.join(selected_actions)}")
+        st.info(f"Ready to save: {', '.join(selected_actions)}")
     else:
-        st.write("Selected: none")
+        st.caption("Select one or more actions, then tap Confirm now.")
 
     if st.button("Confirm now", use_container_width=True, key="btn_confirm_now"):
         if not selected_actions:
@@ -186,8 +219,10 @@ def render_quick_log():
                     diaper_type="mixed",
                 )
 
+            saved_actions = ", ".join(selected_actions)
+
             reset_quick_log_state()
-            st.success("Event(s) saved successfully!")
+            st.success(f"Saved: {saved_actions}")
             st.rerun()
 
         except Exception as e:
@@ -200,8 +235,9 @@ def render_quick_log():
 
 
 def render_event_timeline():
-    """Render the event timeline."""
-    st.header("Event timeline")
+    """Render a compact mobile-friendly event timeline."""
+    st.header("Timeline")
+    render_compact_ui_styles()
 
     try:
         events = get_all_events()
@@ -212,29 +248,43 @@ def render_event_timeline():
 
         for event in events:
             event_time = datetime.fromisoformat(event["event_time"])
-            formatted_time = format_datetime(event_time)
+            time_str = event_time.strftime("%H:%M")
+            date_str = event_time.strftime("%d %b")
 
-            with st.expander(f"{event['event_type'].capitalize()} - {formatted_time}"):
-                if event["notes"]:
-                    st.write(f"**Notes:** {event['notes']}")
+            # --- Title ---
+            event_type = event["event_type"].capitalize()
 
-                if event["event_type"] == "feeding":
-                    details = get_feeding_details(event["id"])
-                    if details:
-                        if details["breast"]:
-                            st.write("**Type:** Breast")
-                        elif details["bottle"]:
-                            st.write("**Type:** Bottle")
-                        else:
-                            st.write("**Type:** Feeding")
+            # --- Subtitle / details ---
+            subtitle = ""
 
-                        if details["bottle"]:
-                            st.write(f"**Bottle amount (ml):** {details['bottle_ml']}")
+            if event["event_type"] == "feeding":
+                details = get_feeding_details(event["id"])
+                if details:
+                    parts = []
+                    if details["breast"]:
+                        parts.append("breast")
+                    if details["bottle"]:
+                        parts.append(f"bottle ({details['bottle_ml']} ml)")
+                    subtitle = " + ".join(parts)
 
-                elif event["event_type"] == "diaper":
-                    details = get_diaper_details(event["id"])
-                    if details:
-                        st.write(f"**Type:** {details['diaper_type']}")
+            elif event["event_type"] == "diaper":
+                details = get_diaper_details(event["id"])
+                if details:
+                    subtitle = details["diaper_type"]
+
+            # --- Render compact row ---
+            notes = event.get("notes") or ""
+
+            st.markdown(
+                f"""
+                <div class="timeline-item">
+                    <div class="timeline-title">{time_str} • {event_type}</div>
+                    {f'<div class="timeline-subtitle">{subtitle}</div>' if subtitle else ''}
+                    {f'<div class="timeline-notes">{notes}</div>' if notes else ''}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     except Exception as e:
         st.error(f"Error loading events: {e}")
