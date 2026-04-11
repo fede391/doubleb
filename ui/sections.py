@@ -62,9 +62,9 @@ def render_kpi_box(label: str, value: str):
         <div style="
             border: 1px solid rgba(49, 51, 63, 0.15);
             border-radius: 12px;
-            padding: 0.55rem 0.4rem;
+            padding: 0.4rem 0.3rem;
             text-align: center;
-            min-height: 88px;
+            min-height: 70px;
             display: flex;
             flex-direction: column;
             justify-content: center;
